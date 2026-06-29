@@ -281,11 +281,7 @@ pub fn get_conflicts() -> AppResult<Vec<ConflictInfo>> {
 }
 
 #[tauri::command]
-pub fn resolve_conflict(
-    path: String,
-    resolution: String,
-    stage: Option<bool>,
-) -> AppResult<()> {
+pub fn resolve_conflict(path: String, resolution: String, stage: Option<bool>) -> AppResult<()> {
     git::resolve_conflict(&path, &resolution, stage.unwrap_or(true))
 }
 

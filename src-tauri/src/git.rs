@@ -54,12 +54,7 @@ pub fn status() -> AppResult<YadmStatus> {
     let branch = current_branch().ok();
     let upstream = upstream().ok().flatten();
 
-    let out = yadm::run_yadm(&[
-        "status",
-        "--porcelain=v1",
-        "-z",
-        "--untracked-files=normal",
-    ])?;
+    let out = yadm::run_yadm(&["status", "--porcelain=v1", "-z", "--untracked-files=normal"])?;
     if out.code != 0 {
         return Err(AppError::Git(out.stderr));
     }
@@ -87,7 +82,9 @@ pub fn status() -> AppResult<YadmStatus> {
             work_status,
         };
 
-        if index_status == 'U' || work_status == 'U' || (index_status == 'A' && work_status == 'A')
+        if index_status == 'U'
+            || work_status == 'U'
+            || (index_status == 'A' && work_status == 'A')
             || (index_status == 'D' && work_status == 'D')
         {
             conflicted.push(item);
@@ -103,7 +100,8 @@ pub fn status() -> AppResult<YadmStatus> {
         }
     }
 
-    let clean = staged.is_empty() && unstaged.is_empty() && untracked.is_empty() && conflicted.is_empty();
+    let clean =
+        staged.is_empty() && unstaged.is_empty() && untracked.is_empty() && conflicted.is_empty();
 
     Ok(YadmStatus {
         initialized: true,
@@ -160,7 +158,9 @@ pub fn log(limit: usize) -> AppResult<Vec<LogEntry>> {
     let limit_str = limit.to_string();
     let out = yadm::run_yadm(&["log", &format, "--date=iso-strict", "-n", &limit_str])?;
     if out.code != 0 {
-        if out.stderr.contains("does not have any commits") || out.stderr.contains("unknown revision") {
+        if out.stderr.contains("does not have any commits")
+            || out.stderr.contains("unknown revision")
+        {
             return Ok(vec![]);
         }
         return Err(AppError::Git(out.stderr));
@@ -235,9 +235,13 @@ pub fn file_diff(path: &str, staged: bool) -> AppResult<DiffResult> {
 
     // Old content
     let old_content = if staged {
-        yadm::run_yadm(&["show", &format!("HEAD:{}", path)]).map(|o| o.stdout).unwrap_or_default()
+        yadm::run_yadm(&["show", &format!("HEAD:{}", path)])
+            .map(|o| o.stdout)
+            .unwrap_or_default()
     } else {
-        yadm::run_yadm(&["show", &format!("HEAD:{}", path)]).map(|o| o.stdout).unwrap_or_default()
+        yadm::run_yadm(&["show", &format!("HEAD:{}", path)])
+            .map(|o| o.stdout)
+            .unwrap_or_default()
     };
 
     // New content (working tree)
@@ -297,7 +301,10 @@ pub fn branches() -> AppResult<Vec<BranchInfo>> {
         }
         let name = parts[0].to_string();
         let current = parts.get(1).copied().unwrap_or("") == "*";
-        let upstream = parts.get(2).map(|s| s.to_string()).filter(|s| !s.is_empty());
+        let upstream = parts
+            .get(2)
+            .map(|s| s.to_string())
+            .filter(|s| !s.is_empty());
         result.push(BranchInfo {
             name,
             current,

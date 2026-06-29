@@ -1,13 +1,13 @@
-mod yadm;
-mod commands;
-mod git;
-mod encryption;
-mod hooks;
-mod config;
 mod bootstrap;
+mod commands;
+mod config;
 mod diff;
+mod encryption;
+mod git;
+mod hooks;
 mod readme;
 mod types;
+mod yadm;
 
 use commands::*;
 

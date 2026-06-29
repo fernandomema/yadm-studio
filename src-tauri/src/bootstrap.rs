@@ -130,4 +130,3 @@ pub fn run() -> AppResult<String> {
     }
     Ok(text)
 }
-

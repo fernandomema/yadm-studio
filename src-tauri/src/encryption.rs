@@ -26,7 +26,10 @@ pub fn list_encrypted() -> AppResult<Vec<EncryptedFile>> {
         let home = yadm::yadm_dir().unwrap_or_else(|| PathBuf::from("."));
         let full = home.join(line);
         let size = std::fs::metadata(&full).map(|m| m.len()).unwrap_or(0);
-        let decrypted = line.strip_suffix(&format!(".{}", ext)).unwrap_or(line).to_string();
+        let decrypted = line
+            .strip_suffix(&format!(".{}", ext))
+            .unwrap_or(line)
+            .to_string();
         result.push(EncryptedFile {
             path: decrypted,
             encrypted_path: line.to_string(),
@@ -100,10 +103,21 @@ pub fn decrypt_to_memory(path: &str) -> AppResult<String> {
     };
     let full = home.join(&enc_path);
     if !full.exists() {
-        return Err(AppError::Other(format!("Encrypted file not found: {}", enc_path)));
+        return Err(AppError::Other(format!(
+            "Encrypted file not found: {}",
+            enc_path
+        )));
     }
     if cfg.program == "gpg" {
-        let out = yadm::run_cmd("gpg", &["--decrypt", "--quiet", "--batch", full.to_string_lossy().as_ref()])?;
+        let out = yadm::run_cmd(
+            "gpg",
+            &[
+                "--decrypt",
+                "--quiet",
+                "--batch",
+                full.to_string_lossy().as_ref(),
+            ],
+        )?;
         if out.code != 0 {
             return Err(AppError::Other(out.stderr));
         }
@@ -173,9 +187,22 @@ pub fn write_config(cfg: &EncryptionConfig) -> AppResult<()> {
         if trimmed.is_empty() {
             continue;
         }
-        yadm::check_rc(&yadm::run_yadm(&["config", "--add", "yadm.gpg-recipient", trimmed])?)?;
+        yadm::check_rc(&yadm::run_yadm(&[
+            "config",
+            "--add",
+            "yadm.gpg-recipient",
+            trimmed,
+        ])?)?;
     }
-    yadm::check_rc(&yadm::run_yadm(&["config", "yadm.openssl-cipher", &cfg.openssl_cipher])?)?;
-    yadm::check_rc(&yadm::run_yadm(&["config", "yadm.openssl-subcommand", &cfg.openssl_subcommand])?)?;
+    yadm::check_rc(&yadm::run_yadm(&[
+        "config",
+        "yadm.openssl-cipher",
+        &cfg.openssl_cipher,
+    ])?)?;
+    yadm::check_rc(&yadm::run_yadm(&[
+        "config",
+        "yadm.openssl-subcommand",
+        &cfg.openssl_subcommand,
+    ])?)?;
     Ok(())
 }

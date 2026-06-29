@@ -55,7 +55,8 @@ pub fn run_yadm(args: &[&str]) -> AppResult<CommandOutput> {
 #[allow(dead_code)]
 pub fn run_yadm_in(_dir: &Path, args: &[&str]) -> AppResult<CommandOutput> {
     run_yadm(args)
-}pub fn run_cmd(program: &str, args: &[&str]) -> AppResult<CommandOutput> {
+}
+pub fn run_cmd(program: &str, args: &[&str]) -> AppResult<CommandOutput> {
     let output = Command::new(program)
         .args(args)
         .stdin(Stdio::null())

@@ -1,4 +1,4 @@
-use crate::types::{AppError, AppResult, ConfigEntry, AlternateInfo};
+use crate::types::{AlternateInfo, AppError, AppResult, ConfigEntry};
 use crate::yadm;
 
 pub fn list_config(scope: &str) -> AppResult<Vec<ConfigEntry>> {
