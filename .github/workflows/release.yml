@@ -31,6 +31,10 @@ jobs:
       - name: install rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: add x86_64 macOS target
+        if: matrix.os == 'macos-latest'
+        run: rustup target add x86_64-apple-darwin
+
       - name: cache cargo
         uses: Swatinem/rust-cache@v2
         with:
