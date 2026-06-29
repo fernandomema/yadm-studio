@@ -58,15 +58,17 @@ jobs:
       - name: install npm dependencies
         run: npm ci
 
-      # Build the Tauri app. `__SKIP__` tells tauri-action NOT to create
-      # a release — we collect artifacts in a follow-up job so the final
-      # release is published once with installers from every platform.
+      # Build the Tauri app. We deliberately do NOT pass `tagName` here:
+      # when `tagName` is set, tauri-action always tries to find-or-create
+      # a release with that tag, which collides across matrix jobs and
+      # fails with `"releaseName" not set`. The dedicated `release` job
+      # below uses softprops/action-gh-release to publish a single release
+      # with all installers collected from these build jobs.
       - name: build tauri
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: __SKIP__
           args: ${{ matrix.os == 'macos-latest' && '--target universal-apple-darwin' || '' }}
 
       - name: upload artifacts
