@@ -1,0 +1,83 @@
+name: release
+
+on:
+  push:
+    branches: [master, main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: build (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-22.04, windows-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: install node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: install rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+
+      - name: install linux dependencies
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libssl-dev \
+            build-essential \
+            curl \
+            wget \
+            file
+
+      - name: install npm dependencies
+        run: npm ci
+
+      - name: build & publish release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # __VERSION__ is replaced with the version from tauri.conf.json.
+          # Creating a tag triggers a real release; we keep it as a draft
+          # so a human can review the artifacts before publishing.
+          tagName: v__VERSION__
+          releaseName: "yadm studio v__VERSION__"
+          releaseBody: |
+            ## yadm studio v__VERSION__
+
+            Cross-platform desktop GUI for [yadm](https://yadm.io/).
+
+            ### Installers
+            - **macOS**: `.dmg` / `.app` (universal: Intel + Apple Silicon)
+            - **Linux**: `.deb` / `.AppImage` / `.rpm`
+            - **Windows**: `.msi` / `.exe`
+
+            See the assets below.
+
+            ### Requirements
+            yadm must be installed and on `$PATH`. See https://yadm.io/docs/install.
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.os == 'macos-latest' && '--target universal-apple-darwin' || '' }}
