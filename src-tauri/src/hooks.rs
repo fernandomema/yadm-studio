@@ -65,6 +65,9 @@ pub fn read(name: &str) -> AppResult<String> {
 }
 
 pub fn write(name: &str, content: &str, executable: bool) -> AppResult<()> {
+    // `executable` is only consumed on unix where we chmod +x the file.
+    // Silence the unused-variable warning on Windows builds.
+    let _ = &executable;
     if !HOOK_NAMES.contains(&name) {
         return Err(AppError::Other(format!("Unknown hook: {}", name)));
     }

@@ -58,30 +58,80 @@ jobs:
       - name: install npm dependencies
         run: npm ci
 
-      - name: build & publish release
+      # Build the Tauri app. `__SKIP__` tells tauri-action NOT to create
+      # a release — we collect artifacts in a follow-up job so the final
+      # release is published once with installers from every platform.
+      - name: build tauri
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          # __VERSION__ is replaced with the version from tauri.conf.json.
-          # Creating a tag triggers a real release; we keep it as a draft
-          # so a human can review the artifacts before publishing.
-          tagName: v__VERSION__
-          releaseName: "yadm studio v__VERSION__"
-          releaseBody: |
-            ## yadm studio v__VERSION__
+          tagName: __SKIP__
+          args: ${{ matrix.os == 'macos-latest' && '--target universal-apple-darwin' || '' }}
+
+      - name: upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tauri-${{ matrix.os }}
+          path: |
+            src-tauri/target/release/bundle/deb/*.deb
+            src-tauri/target/release/bundle/rpm/*.rpm
+            src-tauri/target/release/bundle/appimage/*.AppImage
+            src-tauri/target/release/bundle/msi/*.msi
+            src-tauri/target/release/bundle/nsis/*-setup.exe
+            src-tauri/target/release/bundle/macos/*.dmg
+            src-tauri/target/release/bundle/macos/*.app
+          if-no-files-found: error
+
+  release:
+    name: publish release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: read version
+        id: version
+        run: |
+          VERSION=$(node -p "require('./src-tauri/tauri.conf.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Resolved version: $VERSION"
+
+      - name: download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: list artifacts
+        run: find artifacts -type f \( -name "*.msi" -o -name "*.exe" -o -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" -o -name "*.dmg" -o -name "*.app.tar.gz" -o -name "*.app.gz" \) | sort
+
+      - name: create draft release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: "yadm studio v${{ steps.version.outputs.version }}"
+          draft: true
+          prerelease: false
+          generate_release_notes: true
+          body: |
+            ## yadm studio v${{ steps.version.outputs.version }}
 
             Cross-platform desktop GUI for [yadm](https://yadm.io/).
 
             ### Installers
-            - **macOS**: `.dmg` / `.app` (universal: Intel + Apple Silicon)
+            - **macOS** (universal: Intel + Apple Silicon): `.dmg` / `.app`
             - **Linux**: `.deb` / `.AppImage` / `.rpm`
-            - **Windows**: `.msi` / `.exe`
-
-            See the assets below.
+            - **Windows**: `.msi` / `-setup.exe`
 
             ### Requirements
             yadm must be installed and on `$PATH`. See https://yadm.io/docs/install.
-          releaseDraft: true
-          prerelease: false
-          args: ${{ matrix.os == 'macos-latest' && '--target universal-apple-darwin' || '' }}
+          files: |
+            artifacts/**/*.msi
+            artifacts/**/*-setup.exe
+            artifacts/**/*.deb
+            artifacts/**/*.rpm
+            artifacts/**/*.AppImage
+            artifacts/**/*.dmg
