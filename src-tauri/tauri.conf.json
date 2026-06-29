@@ -40,6 +40,9 @@
     ],
     "category": "DeveloperTool",
     "shortDescription": "Cross-platform GUI for yadm dotfiles manager",
-    "longDescription": "A modern desktop interface to manage your yadm-managed dotfiles: status, commits, alternates, encryption, hooks and bootstrap."
+    "longDescription": "A modern desktop interface to manage your yadm-managed dotfiles: status, commits, alternates, encryption, hooks and bootstrap.",
+    "macOS": {
+      "infoPlist": "Info.plist"
+    }
   }
 }
